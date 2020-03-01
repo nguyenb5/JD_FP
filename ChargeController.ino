@@ -20,12 +20,11 @@ int currentIn = A0;
 int voltageIn = A1;
 int currentBatt = A2;
 int voltageBatt = A3;
-int dataLine = A4;  //SDA
-int clockLine = A5;  //SCL
+//int dataLine = A4;  //SDA			//No need
+//int clockLine = A5;  //SCL		//No need
 int currentLoad = A6;
 
 void setup() {
-  Wire.begin();
   pinMode(tempSense, OUTPUT);
   pinMode(solarShort, OUTPUT);
   pinMode(enLiIon, OUTPUT);
@@ -34,17 +33,19 @@ void setup() {
   pinMode(currentBatt, INPUT);
   pinMode(voltageBatt, INPUT);
   pinMode(currentBatt, INPUT);
-  pinMode(dataLine, OUTPUT);
-  pinMode(clockLine, OUTPUT);
+//  pinMode(dataLine, OUTPUT);		//Shouldn't need to declare for I2C
+//  pinMode(clockLine, OUTPUT);		//Shouldn't need to declare for I2C
   pinMode(currentLoad, INPUT);
 
-  dht.begin();
-  dht2.begin();
+  dht.begin();						// <-- wrong temp sensor
+  dht2.begin();						// <-- wrong temp sensor
 //  dht3.begin();  
 
   //pinMode( , OUTPUT);
   
-  Serial.begin(9600);
+  //Initialize Communication - Only need to perform once
+  Serial.begin(9600);			
+  Wire.begin();
 }
 
 void changePot(byte newWiperValue){
@@ -170,7 +171,6 @@ void shortCurrentOpenVoltage(){ //sends the status of the panel and how much pow
    //digitalWrite(inputNmos, high/low);
    int voltage = analogRead(voltageBatt);
   
-   Serial.begin(9600);
    Serial.write(current);
    Serial.write(voltage);
    Serial.end();
@@ -185,6 +185,11 @@ void shortCurrentOpenVoltage(){ //sends the status of the panel and how much pow
    //Serial.write(value);
 }
 
+/*
+ * sendChargingData()
+ * return: void
+ * print out to serial battery voltage and current
+*/
 void sendChargingData(){
    int value = 0;
   
@@ -202,27 +207,29 @@ void battFullWait10Mins(){
   }
 }
 
+/*
+ * sendSystemInfo()
+ * return: void
+ * print out to serial requested data Vcurr, Icurr, Pcurr, Vopen, Ishort
+*/
 void sendSystemInfo(){ //send the voltage and current the battery sees. 
   //Serial.begin(9600);
-  int value = 0;
-  if(Serial.available()){
-    String incoming = Serial.readString();
+  int requestCode = 0;
+  if(Serial.available() > 0){
+	requestCode = (Serial.read() - '0');
+	delay(50);
 
-    if(incoming == "sendMeData"){
+    if(requestCode == 0){		//Code 0 mean regular charge data Vcurr, Icurr, Pcurr
        sendChargingData();
     }
 
-    else if(incoming == "shortAndOpen"){
+    else if(requestCode == 1){	//Code 1 mean perfrom Open-Short test for solar panel
        shortCurrentOpenVoltage();
     }
 
     else{ //something was received through serial that wasn't one of those 2 strings. 
        Serial.print(incoming);
     } 
-  }
-
-  else{
-    Serial.print("nothing was available");    
   }
 }
 
