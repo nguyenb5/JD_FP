@@ -18,33 +18,45 @@ uint8_t temperatureSensor1[8] = { 0x28, 0xEE, 0xD5, 0x64, 0x1A, 0x16, 0x02, 0xEC
 uint8_t temperatureSensor2[8] = { 0x28, 0x61, 0x64, 0x12, 0x3C, 0x7C, 0x2F, 0x27 };	//LeadAcid
 uint8_t temperatureSensor3[8] = { 0x28, 0x61, 0x64, 0x12, 0x3F, 0xFD, 0x80, 0xC6 };	//Lipo
 
-const int solarEn 		= 2;
-const int enLiIon 		= 3;				// LOW = battery charging is working, HIGH = Stop charging
-const int solarShort 	= 5;
-const int systemTempLED = 8;
-const int liIonTempLED  = 9;
-const int currentIn 	= A0;
-const int voltageIn 	= A1;
-const int currentBatt 	= A2;
-const int voltageBatt 	= A3;
-//int dataLine = A4;  //SDA			//No need
-//int clockLine = A5;  //SCL		//No need
-const int currentLoad 	= A6;
+const int solarEnPin 		  = 2;
+const int enLiIonPin 		  = 3;				// LOW = battery charging is working, HIGH = Stop charging
+const int solarShortPin 	= 5;
+const int systemTempLEDPin = 8;
+const int liIonTempLEDPin  = 9;
+const int currentInPin 	  = A0;
+const int voltageInPin 	  = A1;
+const int currentOutPin 	= A2;
+const int voltageBattPin 	= A3;
+const int currentLoadPin 	= A6;
+
+// Global vars
+
+float vOpen;
+float iShort; 
+float votlageFromPanel;
+float currentFromPanel;
+float Pcurr;
+float currentToSystem;
+float voltageToBatt;
+float currentToBatt;         // = CurrentToSystem - CurrentToLoad
+float currentToLoad;         //This is the current of load
+
+System system;
 
 void setup() {
-  pinMode(solarShort, INPUT);		//Default OFF, there is pull down resistor
-  pinMode(enLiIon, OUTPUT);
-  pinMode(solarEn, INPUT);			//Default ON, there is pull up resistor
-  pinMode(currentIn, INPUT);
-  pinMode(currentBatt, INPUT);
-  pinMode(voltageBatt, INPUT);
-  pinMode(currentLoad, INPUT);
+  pinMode(solarShortPin, INPUT);		//Default OFF, there is pull down resistor
+  pinMode(enLiIonPin, OUTPUT);
+  pinMode(solarEnPin, INPUT);			//Default ON, there is pull up resistor
+  pinMode(currentInPin, INPUT);
+  pinMode(currentOutPin, INPUT);
+  pinMode(voltageBattPin, INPUT);
+  pinMode(currentLoadPin, INPUT);
 //  pinMode(dataLine, OUTPUT);		//Shouldn't need to declare for I2C
 //  pinMode(clockLine, OUTPUT);		//Shouldn't need to declare for I2C
-  pinMode(currentLoad, INPUT);
+  pinMode(currentLoadPin, INPUT);
   
   // turn on LiIon charger
-  digitalWrite(liIonTempLED, LOW);
+  digitalWrite(liIonTempLEDPin, LOW);
   
   //Initialize Communication - Only need to perform once
   Serial.begin(9600);			
@@ -67,27 +79,34 @@ void changePot(byte newWiperValue){
 }
 
 int readValues(){//returns the state of the circuit and how the battery should be charged. 
-   int currentPanelTemporary = analogRead(currentIn);
-   int voltageFromPanel = analogRead(voltageIn);
-   int loadCurrent = analogRead(currentLoad);
-   int currentBatteryTemporary = analogRead(currentBatt);
-   int voltageToBattery = analogRead(voltageBatt);
-   int currentUSBTemp = analogRead(currentLoad);
+   int currentPanelTemporary      = analogRead(currentInPin);   //from solar
+   int voltageFromPanelTemporary  = analogRead(voltageInPin);   //from solar
+   int currentOutTemporary        = analogRead(currentOutPin);  // Ibatt + Iload
+   int voltageToBatteryTemporary  = analogRead(voltageBattPin); // Vbatt
+   int currentLoadTemporary       = analogRead(currentLoadPin); // Iload
+    //Current to battery = SolarOutput - Iload
 
-   //scale all of our values back
-   float currentFromPanel = (currentPanelTemporary/2)/.110;
-   float currentToBattery = (currentBatteryTemporary/2)/.110;
-   float currentToUSB = (currentUSBTemp/2)/.110;
-   float totalCurrentRequired = currentToBattery + currentToUSB;
-   float batteryVoltage = voltageToBattery * .01543;
+    //scale all of our values back
+    // Update Global Vars
+    currentFromPanel = (currentPanelTemporary/2)/.110;
+    currentToSystem = (currentOutTemporary/2)/.110;
+    currentToLoad = (currentLoadTemporary/2)/.110;
+    currentToBatt = currentToSystem - currentToLoad;
+    voltageToBatt = voltageToBatteryTemporary *.01543;
+
+  //  currentFromPanel = (currentPanelTemporary/2)/.110;
+  //  float currentToSystem = (currentOutTemporary/2)/.110;
+  //  float currentToLoad = (currentLoadTemporary/2)/.110;
+  //  float totalCurrentRequired = currentToBattery + currentToLoad; //CHECK
+  //  float batteryVoltage = voltageToBattery * .01543;
 
 
    //for debug
    Serial.print(currentFromPanel);
-   Serial.print(currentToBattery);
-   Serial.print(currentToUSB);
-   Serial.print(totalCurrentRequired);
-   Serial.print(batteryVoltage);
+   Serial.print(currentToSystem);
+   Serial.print(currentToLoad);
+   Serial.print(currentToBatt);
+   Serial.print(voltageToBatt);
    
 //   if(batteryVoltage <13.4){
 //    //bulk charge
@@ -114,13 +133,13 @@ void bulkChangingBangBang(){
 
   byte wiper = 128;
   float batteryVoltage = 0;
-  int currentBatteryTemporary = 0;
+  int currentOuteryTemporary = 0;
   int voltageToBattery = 0;
   float currentToBattery = 0;
   do{
-    currentBatteryTemporary = analogRead(currentBatt);
-    voltageToBattery = analogRead(voltageBatt);
-    currentToBattery = (currentBatteryTemporary/2)/.110;
+    currentOuteryTemporary = analogRead(currentOutPin);
+    voltageToBattery = analogRead(voltageBattPin);
+    currentToBattery = (currentOuteryTemporary/2)/.110;
     batteryVoltage = voltageToBattery * .01543;
     
     if(currentToBattery > 1.5){
@@ -156,25 +175,25 @@ void tempSensingAndShutoff(){
    bool overTempMain = (internalTemp > 40) || (leadacidTemp > 40);
    bool overTempLiIon = liIonTemp > 40;
 	
-   if(overTemp == 1){ 
+    if(overTemp == 1){ 
 	  //Over temp LED signal
-      digitalWrite(systemTempLED, HIGH);
+      digitalWrite(systemTempLEDPin, HIGH);
 	  //Shut down voltage regulator
-	  pinMode(solarEn, OUTPUT);
-      digitalWrite(solarEn, LOW);
+	    pinMode(solarEnPin, OUTPUT);
+      digitalWrite(solarEnPin, LOW);
       //Serial.print("over 40C");  
    }
   
-   else{
+    else{
 	  //Turn off LED if nothing is wrong
-      digitalWrite(systemTempLED, LOW);
+      digitalWrite(systemTempLEDPin, LOW);
       //Serial.print("skip broken led");
    }
    
-   if(overTempLiIon = 1){
+    if(overTempLiIon = 1){
 	   //turn off charging until reset
-	   digitalWrite(enLiIon, HIGH);
-	   digitalWrite(liIonTempLED, HIGH);
+	    digitalWrite(enLiIonPin, HIGH);
+	    digitalWrite(liIonTempLEDPin, HIGH);
    }   
 
 }
@@ -182,41 +201,26 @@ void tempSensingAndShutoff(){
 
 void shortCurrentOpenVoltage(){ //sends the status of the panel and how much power it is producing
    //Perform shutdown voltage regulator
-   pinMode(solarEn, OUTPUT);
-   digitalWrite(solarEn, LOW);
+   pinMode(solarEnPin, OUTPUT);
+   digitalWrite(solarEnPin, LOW);
    delay(1000);
-   int vOpen = analogRead(voltageIn)*(5/1024)*((5.1+49.9)/5.1);
+   vOpen = analogRead(voltageInPin)*(5/1024)*((5.1+49.9)/5.1);
    //Turn on short MOSFET
-   pinMode(solarShort, OUTPUT);
-   digitalWrite(solarShort, HIGH);
+   pinMode(solarShortPin, OUTPUT);
+   digitalWrite(solarShortPin, HIGH);
    delay(100);
-   float iShort = (analogRead(currentIn)/2)/.110;
+   iShort = (analogRead(currentInPin)/2)/.110;
    
    //Turn off short MOSFET
    //Turn voltage regulator back on
-   pinMode(solarShort, INPUT);
+   pinMode(solarShortPin, INPUT);
    pinMode(solarEn, INPUT);
    
-   
-   //CHECK
-   //digitalWrite(inputNmos, high/low);
-   int current = analogRead(currentBatt);
-   //digitalWrite(inputNmos, high/low);
-   int voltage = analogRead(voltageBatt);
-  
-   //CHECK
-   Serial.write(current);
-   Serial.write(voltage);
-   Serial.end();
-   
-   //digitalWrite( )short the input to get current
-   //delay(100) //wait for sensor to reach a value
-   //value = analogRead();      
-   //digitalWrite() return the input to the normal state
-   //Serial.write(value);
-   //digitalWrite() open the input
-   //value = analogRead();
-   //Serial.write(value);
+}
+
+void sendShortOpen(){
+  Serial.println(vOpen);
+  Serial.println(iShort);
 }
 
 /*
@@ -227,9 +231,9 @@ void shortCurrentOpenVoltage(){ //sends the status of the panel and how much pow
 void sendChargingData(){
    int value = 0;
   
-   value = analogRead(currentBatt);
+   value = analogRead(currentOut);
    Serial.write(value);
-   value = analogRead(voltageBatt);
+   value = analogRead(voltageBattPin);
    Serial.write(value); 
 }
 
@@ -262,6 +266,7 @@ void sendSystemInfo(){ //send the voltage and current the battery sees.
 
     else if(requestCode == 1){	//Code 1 mean perfrom Open-Short test for solar panel
        shortCurrentOpenVoltage();
+       sendShortOpen();
     }
 
     else{ //something was received through serial that wasn't one of those 2 strings. 
