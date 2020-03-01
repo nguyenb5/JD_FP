@@ -1,6 +1,4 @@
 #include <Wire.h>
-#include "DHT.h"
-
 #include <OneWire.h>
 #include <DallasTemperature.h> 
 // Install lib: DallasTemperature + OneWire
@@ -34,16 +32,19 @@ const int voltageBatt 	= A3;
 const int currentLoad 	= A6;
 
 void setup() {
-  pinMode(solarShort, OUTPUT);
+  pinMode(solarShort, INPUT);		//Default OFF, there is pull down resistor
   pinMode(enLiIon, OUTPUT);
-  pinMode(solarEn, OUTPUT);
+  pinMode(solarEn, INPUT);			//Default ON, there is pull up resistor
   pinMode(currentIn, INPUT);
   pinMode(currentBatt, INPUT);
   pinMode(voltageBatt, INPUT);
-  pinMode(currentBatt, INPUT);
+  pinMode(currentLoad, INPUT);
 //  pinMode(dataLine, OUTPUT);		//Shouldn't need to declare for I2C
 //  pinMode(clockLine, OUTPUT);		//Shouldn't need to declare for I2C
   pinMode(currentLoad, INPUT);
+  
+  // turn on LiIon charger
+  digitalWrite(liIonTempLED, LOW);
   
   //Initialize Communication - Only need to perform once
   Serial.begin(9600);			
@@ -137,6 +138,12 @@ void bulkChangingBangBang(){
 
 }
 
+/*
+ * tempSensingAndShutoff()
+ * return: void
+ * Read in Temp for all temp sensor and decide if the system need to be shutdown or not
+ * CHECK: Do the system need to recover?
+ */
 void tempSensingAndShutoff(){
    temperatureSensor.requestTemperatures();
    
@@ -152,6 +159,9 @@ void tempSensingAndShutoff(){
    if(overTemp == 1){ 
 	  //Over temp LED signal
       digitalWrite(systemTempLED, HIGH);
+	  //Shut down voltage regulator
+	  pinMode(solarEn, OUTPUT);
+      digitalWrite(solarEn, LOW);
       //Serial.print("over 40C");  
    }
   
@@ -170,12 +180,31 @@ void tempSensingAndShutoff(){
 }
 
 
-void shortCurrentOpenVoltage(){ //sends the status of the panel and how much power it is producing. tc
+void shortCurrentOpenVoltage(){ //sends the status of the panel and how much power it is producing
+   //Perform shutdown voltage regulator
+   pinMode(solarEn, OUTPUT);
+   digitalWrite(solarEn, LOW);
+   delay(1000);
+   int vOpen = analogRead(voltageIn)*(5/1024)*((5.1+49.9)/5.1);
+   //Turn on short MOSFET
+   pinMode(solarShort, OUTPUT);
+   digitalWrite(solarShort, HIGH);
+   delay(100);
+   float iShort = (analogRead(currentIn)/2)/.110;
+   
+   //Turn off short MOSFET
+   //Turn voltage regulator back on
+   pinMode(solarShort, INPUT);
+   pinMode(solarEn, INPUT);
+   
+   
+   //CHECK
    //digitalWrite(inputNmos, high/low);
    int current = analogRead(currentBatt);
    //digitalWrite(inputNmos, high/low);
    int voltage = analogRead(voltageBatt);
   
+   //CHECK
    Serial.write(current);
    Serial.write(voltage);
    Serial.end();
