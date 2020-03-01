@@ -1,31 +1,39 @@
 #include <Wire.h>
 #include "DHT.h"
 
+#include <OneWire.h>
+#include <DallasTemperature.h> 
+// Install lib: DallasTemperature + OneWire
 
-#define DHTPIN 2    // Digital pin connected to the DHT sensor
-#define DHTPIN2 3
-//#define DHTPIN3 4
+// Data wire is plugged into digital pin D6 on the Arduino
+#define ONE_WIRE_BUS 6
 
-#define DHTTYPE DHT11   // DHT 11
+// Setup a oneWire instance to communicate with any OneWire device
+OneWire oneWire(ONE_WIRE_BUS);	
 
-DHT dht(DHTPIN, DHTTYPE);
-DHT dht2(DHTPIN2, DHTTYPE);
-//DHT dht3(DHTPIN3, DHTTYPE);
+// Pass oneWire reference to DallasTemperature library
+DallasTemperature temperatureSensor(&oneWire);
 
-int tempSense = 9;
-int solarShort = 8;
-int enLiIon = 6;
-int solarEn = 5;
-int currentIn = A0;
-int voltageIn = A1;
-int currentBatt = A2;
-int voltageBatt = A3;
+// Address of temp sensor
+// Place holder address NOW!
+uint8_t temperatureSensor1[8] = { 0x28, 0xEE, 0xD5, 0x64, 0x1A, 0x16, 0x02, 0xEC };	//Internal
+uint8_t temperatureSensor2[8] = { 0x28, 0x61, 0x64, 0x12, 0x3C, 0x7C, 0x2F, 0x27 };	//LeadAcid
+uint8_t temperatureSensor3[8] = { 0x28, 0x61, 0x64, 0x12, 0x3F, 0xFD, 0x80, 0xC6 };	//Lipo
+
+const int solarEn 		= 2;
+const int enLiIon 		= 3;				// LOW = battery charging is working, HIGH = Stop charging
+const int solarShort 	= 5;
+const int systemTempLED = 8;
+const int liIonTempLED  = 9;
+const int currentIn 	= A0;
+const int voltageIn 	= A1;
+const int currentBatt 	= A2;
+const int voltageBatt 	= A3;
 //int dataLine = A4;  //SDA			//No need
 //int clockLine = A5;  //SCL		//No need
-int currentLoad = A6;
+const int currentLoad 	= A6;
 
 void setup() {
-  pinMode(tempSense, OUTPUT);
   pinMode(solarShort, OUTPUT);
   pinMode(enLiIon, OUTPUT);
   pinMode(solarEn, OUTPUT);
@@ -36,16 +44,11 @@ void setup() {
 //  pinMode(dataLine, OUTPUT);		//Shouldn't need to declare for I2C
 //  pinMode(clockLine, OUTPUT);		//Shouldn't need to declare for I2C
   pinMode(currentLoad, INPUT);
-
-  dht.begin();						// <-- wrong temp sensor
-  dht2.begin();						// <-- wrong temp sensor
-//  dht3.begin();  
-
-  //pinMode( , OUTPUT);
   
   //Initialize Communication - Only need to perform once
   Serial.begin(9600);			
   Wire.begin();
+  temperatureSensor.begin();
 }
 
 void changePot(byte newWiperValue){
@@ -77,6 +80,8 @@ int readValues(){//returns the state of the circuit and how the battery should b
    float totalCurrentRequired = currentToBattery + currentToUSB;
    float batteryVoltage = voltageToBattery * .01543;
 
+
+   //for debug
    Serial.print(currentFromPanel);
    Serial.print(currentToBattery);
    Serial.print(currentToUSB);
@@ -133,37 +138,37 @@ void bulkChangingBangBang(){
 }
 
 void tempSensingAndShutoff(){
+   temperatureSensor.requestTemperatures();
+   
+   float internalTemp = temperatureSensor.getTempC(temperatureSensor1);
+   float leadacidTemp = temperatureSensor.getTempC(temperatureSensor2);
+   float liIonTemp 	  = temperatureSensor.getTempC(temperatureSensor3);
+   
+   // overTempMain include internal temperature sensors and lead acid battery 
+   // these device provide/sink large amount of current
+   bool overTempMain = (internalTemp > 40) || (leadacidTemp > 40);
+   bool overTempLiIon = liIonTemp > 40;
+	
+   if(overTemp == 1){ 
+	  //Over temp LED signal
+      digitalWrite(systemTempLED, HIGH);
+      //Serial.print("over 40C");  
+   }
   
-  float h = dht.readHumidity();
-  // Read temperature as Celsius (the default)
-  float t = dht.readTemperature();
-  // Read temperature as Fahrenheit (isFahrenheit = true)
-  float f = dht.readTemperature(true);
-
-  float h2 = dht2.readHumidity();
-  float t2 = dht2.readTemperature();
-  // Read temperature as Fahrenheit (isFahrenheit = true)
-  float f2 = dht2.readTemperature(true);
-
-  float hif = dht.computeHeatIndex(f, h);
-  // Compute heat index in Celsius (isFahreheit = false)
-  float hic = dht.computeHeatIndex(t, h, false);
-
-  float hif2 = dht.computeHeatIndex(f2, h2);
-  // Compute heat index in Celsius (isFahreheit = false)
-  float hic2 = dht.computeHeatIndex(t2, h2, false);
-
-  if(t > 25){ 
-    digitalWrite(11, HIGH);
-        //Serial.print("over 25");  
-  }
-  
-  else{
-    digitalWrite(11, LOW);
-        //Serial.print("skip broken led");
-  }
+   else{
+	  //Turn off LED if nothing is wrong
+      digitalWrite(systemTempLED, LOW);
+      //Serial.print("skip broken led");
+   }
+   
+   if(overTempLiIon = 1){
+	   //turn off charging until reset
+	   digitalWrite(enLiIon, HIGH);
+	   digitalWrite(liIonTempLED, HIGH);
+   }   
 
 }
+
 
 void shortCurrentOpenVoltage(){ //sends the status of the panel and how much power it is producing. tc
    //digitalWrite(inputNmos, high/low);
@@ -189,7 +194,7 @@ void shortCurrentOpenVoltage(){ //sends the status of the panel and how much pow
  * sendChargingData()
  * return: void
  * print out to serial battery voltage and current
-*/
+ */
 void sendChargingData(){
    int value = 0;
   
@@ -199,11 +204,14 @@ void sendChargingData(){
    Serial.write(value); 
 }
 
+/*
+ * Need to rewrite to async code
+ */
 void battFullWait10Mins(){
   uint32_t period = 10 * 60000L;       // 10 minutes
 
   for( uint32_t tStart = millis();  (millis()-tStart) < period;  ){ //hang out in this loop for 10 minutes and just send the Pi the charging and panel data if it asks for it.
-    sendSystemInfo();
+    sendSystemInfo(); 					// Sending too much data!
   }
 }
 
