@@ -1,5 +1,4 @@
-#include <Wire.h>
-#include <OneWire.h>
+  #include <Wire.h>
 #include <DallasTemperature.h> 
 // Install lib: DallasTemperature + OneWire
 
@@ -14,8 +13,8 @@ DallasTemperature temperatureSensor(&oneWire);
 
 // Address of temp sensor
 // Place holder address NOW!
-uint8_t temperatureSensor1[8] = { 0x28, 0xEE, 0xD5, 0x64, 0x1A, 0x16, 0x02, 0xEC };	//Internal
-uint8_t temperatureSensor2[8] = { 0x28, 0x61, 0x64, 0x12, 0x3C, 0x7C, 0x2F, 0x27 };	//LeadAcid
+uint8_t temperatureSensor1[8] = { 0x28, 0x6A, 0x24, 0xFC, 0x0B, 0x00, 0x00, 0x57 };	//Internal
+uint8_t temperatureSensor2[8] = { 0x28, 0x33, 0x09, 0x79, 0x97, 0x15, 0x03, 0xC1 };	//LeadAcid
 uint8_t temperatureSensor3[8] = { 0x28, 0x61, 0x64, 0x12, 0x3F, 0xFD, 0x80, 0xC6 };	//Lipo
 
 const int solarEnPin 		  = 2;
@@ -29,6 +28,7 @@ const int currentOutPin 	= A2;
 const int voltageBattPin 	= A3;
 const int currentLoadPin 	= A6;
 
+
 // Global vars
 
 float vOpen;
@@ -41,7 +41,7 @@ float voltageToBatt;
 float currentToBatt;         // = CurrentToSystem - CurrentToLoad
 float currentToLoad;         //This is the current of load
 
-System system;
+byte wiper;
 
 void setup() {
   pinMode(solarShortPin, INPUT);		//Default OFF, there is pull down resistor
@@ -58,6 +58,9 @@ void setup() {
   // turn on LiIon charger
   digitalWrite(liIonTempLEDPin, LOW);
   
+  // declare global variable
+  wiper = 128;   //init
+
   //Initialize Communication - Only need to perform once
   Serial.begin(9600);			
   Wire.begin();
@@ -88,9 +91,9 @@ int readValues(){//returns the state of the circuit and how the battery should b
 
     //scale all of our values back
     // Update Global Vars
-    currentFromPanel = (currentPanelTemporary/2)/.110;
-    currentToSystem = (currentOutTemporary/2)/.110;
-    currentToLoad = (currentLoadTemporary/2)/.110;
+    currentFromPanel = (currentPanelTemporary*5/1024)/.110;
+    currentToSystem = (currentOutTemporary*5/1024)/.110;
+    currentToLoad = (currentLoadTemporary*5/1024)/.110;
     currentToBatt = currentToSystem - currentToLoad;
     voltageToBatt = voltageToBatteryTemporary *.01543;
 
@@ -130,20 +133,9 @@ int readValues(){//returns the state of the circuit and how the battery should b
 }
 
 void bulkChangingBangBang(){
-
-  byte wiper = 128;
-  float batteryVoltage = 0;
-  int currentOuteryTemporary = 0;
-  int voltageToBattery = 0;
-  float currentToBattery = 0;
-  do{
-    currentOuteryTemporary = analogRead(currentOutPin);
-    voltageToBattery = analogRead(voltageBattPin);
-    currentToBattery = (currentOuteryTemporary/2)/.110;
-    batteryVoltage = voltageToBattery * .01543;
-    
-    if(currentToBattery > 1.5){
-      wiper++;
+  do{    
+    if(currentToBatt > 1.5){
+      wiper++;              //CHECK if this decrease charging voltage;
       changePot(wiper);
     }
 
@@ -153,7 +145,7 @@ void bulkChangingBangBang(){
     }
     delay(500);
     //do I need to shut off the power to the battery to take an accurate reading of its resting voltage. 
-  }while(batteryVoltage < 13.2);
+  } while(voltageToBatt < 14.2);
 
 }
 
@@ -175,7 +167,7 @@ void tempSensingAndShutoff(){
    bool overTempMain = (internalTemp > 40) || (leadacidTemp > 40);
    bool overTempLiIon = liIonTemp > 40;
 	
-    if(overTemp == 1){ 
+    if(overTempMain == 1){ 
 	  //Over temp LED signal
       digitalWrite(systemTempLEDPin, HIGH);
 	  //Shut down voltage regulator
@@ -201,20 +193,20 @@ void tempSensingAndShutoff(){
 
 void shortCurrentOpenVoltage(){ //sends the status of the panel and how much power it is producing
    //Perform shutdown voltage regulator
-   pinMode(solarEnPin, OUTPUT);
-   digitalWrite(solarEnPin, LOW);
-   delay(1000);
-   vOpen = analogRead(voltageInPin)*(5/1024)*((5.1+49.9)/5.1);
-   //Turn on short MOSFET
-   pinMode(solarShortPin, OUTPUT);
-   digitalWrite(solarShortPin, HIGH);
-   delay(100);
-   iShort = (analogRead(currentInPin)/2)/.110;
+    pinMode(solarEnPin, OUTPUT);
+    digitalWrite(solarEnPin, LOW);
+    delay(1000);
+    vOpen = analogRead(voltageInPin)*(5/1024)*((5.1+49.9)/5.1);
+    //Turn on short MOSFET
+    pinMode(solarShortPin, OUTPUT);
+    digitalWrite(solarShortPin, HIGH);
+    delay(100);
+    iShort = (analogRead(currentInPin)/2)/.110;
    
-   //Turn off short MOSFET
-   //Turn voltage regulator back on
-   pinMode(solarShortPin, INPUT);
-   pinMode(solarEn, INPUT);
+    //Turn off short MOSFET
+    //Turn voltage regulator back on
+    pinMode(solarShortPin, INPUT);
+    pinMode(solarEnPin, INPUT);
    
 }
 
@@ -229,21 +221,29 @@ void sendShortOpen(){
  * print out to serial battery voltage and current
  */
 void sendChargingData(){
-   int value = 0;
+  //  int value = 0;
+  Serial.println(votlageFromPanel);
+  Serial.println(currentFromPanel);
+  Serial.println(votlageFromPanel*currentFromPanel); // power from panel
+
+  //Serial.println(batteryVoltage);
+  //Serial.println(currentToBatt);
+  //Serial.println(currentToLoad);
+
   
-   value = analogRead(currentOut);
-   Serial.write(value);
-   value = analogRead(voltageBattPin);
-   Serial.write(value); 
+  //  value = analogRead(currentOut);
+  //  Serial.write(value);
+  //  value = analogRead(voltageBattPin);
+  //  Serial.write(value); 
 }
 
 /*
- * Need to rewrite to async code
+ * Need to rewrite to async code CHECK
  */
 void battFullWait10Mins(){
   uint32_t period = 10 * 60000L;       // 10 minutes
 
-  for( uint32_t tStart = millis();  (millis()-tStart) < period;  ){ //hang out in this loop for 10 minutes and just send the Pi the charging and panel data if it asks for it.
+  for( uint32_t tStart = millis();  (millis()-tStart) < period;){ //hang out in this loop for 10 minutes and just send the Pi the charging and panel data if it asks for it.
     sendSystemInfo(); 					// Sending too much data!
   }
 }
@@ -270,17 +270,18 @@ void sendSystemInfo(){ //send the voltage and current the battery sees.
     }
 
     else{ //something was received through serial that wasn't one of those 2 strings. 
-       Serial.print(incoming);
+       Serial.print(requestCode);
     } 
   }
 }
 
-byte wiper = 0;
-
-
 void loop() {
   sendSystemInfo();
   int state = readValues();
+  //Gather data
+
+  //Execute based on state
+
   if(state == 1){
  
   }
@@ -304,4 +305,8 @@ void loop() {
       }
       */
   }
+
+  
+  
 }
+ 
