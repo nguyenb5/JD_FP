@@ -141,14 +141,14 @@ void determineBattValues(){//returns the state of the circuit and how the batter
     currentToSystem   = -((currentOutTemporary*5.0/1024)-2.575)/0.166;
     currentToLoad     = -((currentLoadTemporary*5.0/1024)-2.575)/0.166;
     currentToBatt     = currentToSystem - currentToLoad;
-    voltageToBatt     = voltageToBatteryTemporary *.01543;
+    voltageToBatt     = voltageToBatteryTemporary *.01543+.5;
 
-    //benis
-    if(voltageToBatt < 14.2 || currentToBattery < 0){ //if battery voltage 
-      BattState = BULK
-    }
-  //TODO: Remove later
-  //for debug
+    // //benis
+    // if(voltageToBatt < 14.2 || currentToBattery < 0){ //if battery voltage 
+    //   BattState = BULK
+    // }
+  // TODO: Remove later
+  // for debug
   //  Serial.print(currentFromPanel);
   //  Serial.print(currentToSystem);
   //  Serial.print(currentToLoad);
@@ -164,23 +164,25 @@ void chargeBatt(){
 
   //If under chanrged
   switch(BattState){
-    case BULK:
-      bulkChangingBangBang();
-      if(voltageToBatt > CONSTANT_CHARGING_VOLTAGE){
-        BattState = TRICKLE;
-      }
-    break;
-    case TRICKLE:
-      if(currentToBatt <= 0.2 * CONSTANT_CHARGING_CURRENT){
-        BattState = FlOATING;
-      }
-      
-    break;  
-
-    case FlOATING:
-      setBattVoltageBangBang(FLOATING_BATT_VOLTAGE);
-
-    break;
+      case BULK: 
+        Serial.println("In bulk!");
+        bulkChangingBangBang();
+        if(voltageToBatt > CONSTANT_CHARGING_VOLTAGE){
+          BattState = TRICKLE;
+        }
+      break;
+      case TRICKLE:
+        Serial.println("In trickle!");
+        if(currentToBatt <= 0.2 * CONSTANT_CHARGING_CURRENT){
+          BattState = FlOATING;
+        }
+        
+      break;  
+      case FlOATING:
+        Serial.println("In floating!");
+        setBattVoltageBangBang(FLOATING_BATT_VOLTAGE);
+  
+      break;
   }
 }
 
@@ -318,7 +320,8 @@ void setBattVoltageBangBang(float target){
 
 
 void loop() {
-  tempSensingAndShutoff();
+  // tempSensingAndShutoff();
+  determineBattValues();
   sendSystemInfo();
   chargeBatt();
 }
