@@ -61,7 +61,8 @@ class App(Tk):
         print("HELLO")
         global vOpen, iShort, pCurr, vCurr, iCurr
 
-        self.widgets()
+        ser.write(b'0')
+
         vCurrSolar 		= ser.readline().decode("utf-8").rstrip("\r\n")
         iCurrSolar 		= ser.readline().decode("utf-8").rstrip("\r\n")
         pCurrSolar 		= ser.readline().decode("utf-8").rstrip("\r\n")
