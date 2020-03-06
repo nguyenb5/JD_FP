@@ -19,10 +19,20 @@ class App(Tk):
         tabControl.pack(expand=1, fill="both")
         self.widgets()
         self.attributes("-fullscreen", True)
+        #Here to start the loop for updating data
+        self.after(2, self.updateData)
         
-    
+    #getShortOpen()
+    #send out request to arduino and update VOpen, IShort   
     def getShortOpen(self):
-        print("HI")    
+        print("HI")
+
+    #updateData
+    #send signal to arduino to get current data for Voltage, Current, Power, Temp...
+    #auto loop after 5 seconds (asynchronous)
+    def updateData(self):
+        print("HELLO")
+        self.after(1000, self.updateData) #asynchronous 
 
     def widgets(self):
         ## Tab1 start here
@@ -72,24 +82,23 @@ class App(Tk):
         labelFrame2.config(bg='white')
         labelFrame2.grid(column=0, row=0, padx=8, pady=4)
 
-        internalTempText = Label(labelFrame2, text="Internal Temp: ", fg ="#333", bg = "#fff").grid(column=0, row = 0, sticky = W)
-        internalTempDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff")
+        internalTempText = Label(labelFrame2, text="Internal Temp: ", fg ="#333", bg = "#fff", font=('Helvetica', '15')).grid(column=0, row = 0, sticky = W)
+        internalTempDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
         internalTempDis.grid(column=1, row=0, sticky = W)
 
-        leadAcidTempText = Label(labelFrame2, text="LeadAcid Temp: ", fg ="#333", bg = "#fff").grid(column=0, row = 1, sticky = W)
-        leadAcidTempDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff")
+        leadAcidTempText = Label(labelFrame2, text="LeadAcid Temp: ", fg ="#333", bg = "#fff", font=('Helvetica', '15')).grid(column=0, row = 1, sticky = W)
+        leadAcidTempDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
         leadAcidTempDis.grid(column=1, row=1, sticky = W)
 
-        liIonTempText = Label(labelFrame2, text="Li-ion Temp: ", fg ="#333", bg = "#fff").grid(column=0, row = 2, sticky = W)
-        liIonTempDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff")
+        liIonTempText = Label(labelFrame2, text="Li-ion Temp: ", fg ="#333", bg = "#fff", font=('Helvetica', '15')).grid(column=0, row = 2, sticky = W)
+        liIonTempDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
         liIonTempDis.grid(column=1, row=2, sticky = W)
 
-        CSymbol = lambda:Label(labelFrame2, text="°C", fg ="#333", bg = "#fff")
+        CSymbol = lambda:Label(labelFrame2, text="°C", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
         CSymbol().grid(column=3, row=0)
         CSymbol().grid(column=3, row=1)
         CSymbol().grid(column=3, row=2)
         # Basic layout end
-
 
 
 app = App()
