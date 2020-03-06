@@ -25,6 +25,7 @@ class App(Tk):
     def widgets(self):
         labelFrame = LabelFrame(self.tab1, text="")
         labelFrame.grid(column=0, row=0, padx=8, pady=4)
+        labelFrame.config(bg='white')
 
         vOpenText = Label(labelFrame, text="V-Open: ", fg ="#333", bg = "#fff").grid(column=0, row = 0, sticky = W)
         vOpenDis = Label(labelFrame, text="1", fg ="#333", bg = "#fff")
@@ -58,6 +59,7 @@ class App(Tk):
 
 # This is the 2nd tab for the shit
         labelFrame2 = LabelFrame(self.tab2, text="")
+        labelFrame2.config(bg='white')
         labelFrame2.grid(column=0, row=0, padx=8, pady=4)
 
         internalTempText = Label(labelFrame2, text="Internal Temp: ", fg ="#333", bg = "#fff").grid(column=0, row = 0, sticky = W)
@@ -71,6 +73,11 @@ class App(Tk):
         liIonTempText = Label(labelFrame2, text="Li-ion Temp: ", fg ="#333", bg = "#fff").grid(column=0, row = 2, sticky = W)
         liIonTempDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff")
         liIonTempDis.grid(column=1, row=2, sticky = W)
+
+        CSymbol = lambda:Label(labelFrame2, text="°C", fg ="#333", bg = "#fff")
+        CSymbol().grid(column=3, row=0)
+        CSymbol().grid(column=3, row=1)
+        CSymbol().grid(column=3, row=2)
 
 
 app = App()
