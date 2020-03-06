@@ -58,6 +58,12 @@ float voltageToBatt;
 float currentToBatt;         // = CurrentToSystem - CurrentToLoad
 float currentToLoad;         //This is the current of load
 
+int currentPanelTemporary;
+int voltageFromPanelTemporary;  
+int currentOutTemporary; 
+int voltageToBatteryTemporary;  
+int currentLoadTemporary;       
+
 byte wiper;
 
 typedef enum BattStates {BULK,TRICKLE, FlOATING} BattStates;
@@ -132,11 +138,11 @@ void bulkChangingBangBang(){
  * description: Read in analog values and update to global vars
  */
 void determineBattValues(){//returns the state of the circuit and how the battery should be charged. 
-   int currentPanelTemporary      = analogRead(currentInPin);   //from solar
-   int voltageFromPanelTemporary  = analogRead(voltageInPin);   //from solar
-   int currentOutTemporary        = analogRead(currentOutPin);  // Ibatt + Iload
-   int voltageToBatteryTemporary  = analogRead(voltageBattPin); // Vbatt
-   int currentLoadTemporary       = analogRead(currentLoadPin); // Iload
+   currentPanelTemporary      = analogRead(currentInPin);   //from solar
+   voltageFromPanelTemporary  = analogRead(voltageInPin);   //from solar
+   currentOutTemporary        = analogRead(currentOutPin);  // Ibatt + Iload
+   voltageToBatteryTemporary  = analogRead(voltageBattPin); // Vbatt
+   currentLoadTemporary       = analogRead(currentLoadPin); // Iload
     //Current to battery = SolarOutput - Iload
 
     //scale all of our values back
@@ -275,6 +281,9 @@ void sendChargingData(){
   erial.println(internalTemp);
   Serial.println(leadacidTemp);
   Serial.println(liIonTemp);
+  Serial.println(currentToLoad);
+  Serial.println(currentToBatt);
+  Serial.println(voltageToBatt);
 }
 
 
