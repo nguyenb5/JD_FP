@@ -3,8 +3,6 @@ from tkinter import ttk
 import serial
 import time
 
-pCurr = vCurr= iCurr= iShort =vOpen = "NA"
-
 ser=serial.Serial("/dev/ttyACM0", 9600)
 
 class App(Tk):
@@ -40,13 +38,22 @@ class App(Tk):
     def getShortOpen(self):
         print("HI")
 
+        #send serial to arduino
+        ser.write(b'1')
+
+        vOpen = ser.readline().decode("utf-8").rstrip("\r\n")
+        iShort = ser.readline().decode("utf-8").rstrip("\r\n")
+        
+        self.vOpenDis.configure(text=str(vOpen))
+        self.iShortDis.configure(text=str(iShort))
+
     #updateData
     #send signal to arduino to get current data for Voltage, Current, Power, Temp...
     #auto loop after 5 seconds (asynchronous)
     def updateData(self):
         print("HELLO")
-        global vOpen, iShort, pCurr, vCurr, iCurr
 
+        #send serial to arduino
         ser.write(b'0')
 
         vCurrSolar 		= ser.readline().decode("utf-8").rstrip("\r\n")
