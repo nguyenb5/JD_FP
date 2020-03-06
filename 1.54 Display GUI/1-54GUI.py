@@ -29,6 +29,21 @@ class App(Tk):
         #Here to start the loop for updating data
         self.after(2, self.updateData)
 
+        #Init reuse lable
+        self.vOpenDis = None
+        self.iShortDis = None
+        self.vCurrDis = None
+        self.iCurrDis = None
+        self.pCurrDis = None
+        self.voltageBatDis = None
+        self.currentBatDis = None
+        self.currentLoadDis = None
+        self.internalTempDis = None
+        self.leadAcidTempDis = None
+        self.liIonTempDis = None
+
+
+
     #startSerial
     #delay so arduino Serial has enough time to bootup
     def startSerial(self):
@@ -46,7 +61,7 @@ class App(Tk):
         print("HELLO")
         global vOpen, iShort, pCurr, vCurr, iCurr
 
-        widgets()
+        self.widgets()
         vCurrSolar 		= ser.readline().decode("utf-8").rstrip("\r\n")
         iCurrSolar 		= ser.readline().decode("utf-8").rstrip("\r\n")
         pCurrSolar 		= ser.readline().decode("utf-8").rstrip("\r\n")
@@ -57,15 +72,15 @@ class App(Tk):
         iBatt 	        = ser.readline().decode("utf-8").rstrip("\r\n")
         iLoad 	        = ser.readline().decode("utf-8").rstrip("\r\n")
 
-        widgets.vCurrDis.configure(text=str(vCurrSolar))
-        widgets.iCurrDis.configure(text=str(iCurrSolar))
-        widgets.pCurrDis.configure(text=str(pCurrSolar))
-        widgets.internalTempDis.configure(text=str(internalTemp))
-        widgets.leadAcidTempDis.configure(text=str(leadAcidTemp))
-        widgets.liIonTempDis.configure(text=str(liIonTemp))
-        widgets.voltageBatDis.configure(text=str(vBatt))
-        widgets.currentBatDis.configure(text=str(iBatt))
-        widgets.currentLoadDis.configure(text=str(iLoad))
+        self.vCurrDis.configure(text=str(vCurrSolar))
+        self.iCurrDis.configure(text=str(iCurrSolar))
+        self.pCurrDis.configure(text=str(pCurrSolar))
+        self.internalTempDis.configure(text=str(internalTemp))
+        self.leadAcidTempDis.configure(text=str(leadAcidTemp))
+        self.liIonTempDis.configure(text=str(liIonTemp))
+        self.voltageBatDis.configure(text=str(vBatt))
+        self.currentBatDis.configure(text=str(iBatt))
+        self.currentLoadDis.configure(text=str(iLoad))
 
         self.after(1000, self.updateData) #asynchronous 
 
@@ -77,32 +92,32 @@ class App(Tk):
         labelFrame.config(bg='white')
 
         vOpenText = Label(labelFrame, text="V Open: ", fg ="#333", bg = "#fff",font=('Helvetica', '15')).grid(column=0, row = 0, sticky = W)
-        vOpenDis = Label(labelFrame, text="1", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
-        vOpenDis.grid(column=1, row=0, sticky = W)                                     
+        self.vOpenDis = Label(labelFrame, text="1", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
+        self.vOpenDis.grid(column=1, row=0, sticky = W)                                     
 
         iShortText = Label(labelFrame, text="I Short: ", fg ="#333", bg = "#fff",font=('Helvetica', '15')).grid(column=0, row = 1, sticky = W) 
-        iShortDis = Label(labelFrame, text="2", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
-        iShortDis.grid(column=1, row=1, sticky = W)
+        self.iShortDis = Label(labelFrame, text="2", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
+        self.iShortDis.grid(column=1, row=1, sticky = W)
 
         vCurrText = Label(labelFrame, text="V Current: ", fg ="#333", bg = "#fff", font=('Helvetica', '15')).grid(column=0, row = 2, sticky = W)
-        vCurrDis = Label(labelFrame, text="3", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
-        vCurrDis.grid(column=1, row=2, sticky = W)
+        self.vCurrDis = Label(labelFrame, text="3", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
+        self.vCurrDis.grid(column=1, row=2, sticky = W)
 
         iCurrText = Label(labelFrame, text="I Current: ", fg ="#333", bg = "#fff", font=('Helvetica', '15')).grid(column=0, row = 3, sticky = W)
-        iCurrDis = Label(labelFrame, text="4", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
-        iCurrDis.grid(column=1, row=3, sticky = W)
+        self.iCurrDis = Label(labelFrame, text="4", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
+        self.iCurrDis.grid(column=1, row=3, sticky = W)
 
         pCurrText = Label(labelFrame, text="P Current: ", fg ="#333", bg = "#fff", font=('Helvetica', '15')).grid(column=0, row = 4, sticky = W)
-        pCurrDis = Label(labelFrame, text="5", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
-        pCurrDis.grid(column=1, row=4, sticky = W)
+        self.pCurrDis = Label(labelFrame, text="5", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
+        self.pCurrDis.grid(column=1, row=4, sticky = W)
 
         vSymbol = lambda:Label(labelFrame, text="V", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
-        vSymbol().grid(column=3, row=0)
-        vSymbol().grid(column=3, row=2)
+        self.vSymbol().grid(column=3, row=0)
+        self.vSymbol().grid(column=3, row=2)
 
         iSymbol = lambda:Label(labelFrame, text="I", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
-        iSymbol().grid(column=3, row=1)
-        iSymbol().grid(column=3, row=3)
+        self.iSymbol().grid(column=3, row=1)
+        self.iSymbol().grid(column=3, row=3)
 
         pSymbol = Label(labelFrame, text="W", fg ="#333", bg = "#fff",font=('Helvetica', '15')).grid(column=3, row=4)
         # Button here
@@ -118,28 +133,28 @@ class App(Tk):
         labelFrame2.grid(column=0, row=0, padx=8, pady=4)
         
         voltageBatText = Label(labelFrame2, text="Battery Voltage: ", fg ="#333", bg = "#fff", font=('Helvetica', '15')).grid(column=0, row = 0, sticky = W)
-        voltageBatDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
-        voltageBatDis.grid(column=1, row=0, sticky = W)
+        self.voltageBatDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
+        self.voltageBatDis.grid(column=1, row=0, sticky = W)
 
         currentBatText = Label(labelFrame2, text="Battery Current: ", fg ="#333", bg = "#fff", font=('Helvetica', '15')).grid(column=0, row = 1, sticky = W)
-        currentBatDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
-        currentBatDis.grid(column=1, row=1, sticky = W)
+        self.currentBatDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
+        self.currentBatDis.grid(column=1, row=1, sticky = W)
 
         currentLoadText = Label(labelFrame2, text="Load Current: ", fg ="#333", bg = "#fff", font=('Helvetica', '15')).grid(column=0, row = 2, sticky = W)
-        currentLoadDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
-        currentLoadDis.grid(column=1, row=2, sticky = W)        
+        self.currentLoadDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
+        self.currentLoadDis.grid(column=1, row=2, sticky = W)        
         
         internalTempText = Label(labelFrame2, text="Internal Temp: ", fg ="#333", bg = "#fff", font=('Helvetica', '15')).grid(column=0, row = 3, sticky = W)
-        internalTempDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
-        internalTempDis.grid(column=1, row=3, sticky = W)
+        self.internalTempDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
+        self.internalTempDis.grid(column=1, row=3, sticky = W)
 
         leadAcidTempText = Label(labelFrame2, text="Lead-Acid Temp: ", fg ="#333", bg = "#fff", font=('Helvetica', '15')).grid(column=0, row = 4, sticky = W)
-        leadAcidTempDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
-        leadAcidTempDis.grid(column=1, row=4, sticky = W)
+        self.leadAcidTempDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
+        self.leadAcidTempDis.grid(column=1, row=4, sticky = W)
 
         liIonTempText = Label(labelFrame2, text="Li-ion Temp: ", fg ="#333", bg = "#fff", font=('Helvetica', '15')).grid(column=0, row = 5, sticky = W)
-        liIonTempDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
-        liIonTempDis.grid(column=1, row=5, sticky = W)
+        self.liIonTempDis = Label(labelFrame2, text="5", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
+        self.liIonTempDis.grid(column=1, row=5, sticky = W)
 
         VSymbol = Label(labelFrame2, text="V", fg ="#333", bg = "#fff",font=('Helvetica', '15')).grid(column=3, row=0)
 
