@@ -38,6 +38,18 @@ pCurrText = Label(window, text="P-now: ", fg ="#333", bg = "#fff").grid(column=0
 pCurrDis = Label(window, text="5", fg ="#333", bg = "#fff")
 pCurrDis.grid(column=1, row=4, sticky = W)
 
+internalTempText = Label(window, text="Internal Temp: ", fg ="#333", bg = "#fff").grid(column=0, row = 5, sticky = W)
+internalTempDis = Label(window, text="5", fg ="#333", bg = "#fff")
+internalTempDis.grid(column=1, row=5, sticky = W)
+
+leadAcidTempText = Label(window, text="LeadAcid Temp: ", fg ="#333", bg = "#fff").grid(column=0, row = 6, sticky = W)
+leadAcidTempDis = Label(window, text="5", fg ="#333", bg = "#fff")
+leadAcidTempDis.grid(column=1, row=6, sticky = W)
+
+liIonTempText = Label(window, text="Li-ion Temp: ", fg ="#333", bg = "#fff").grid(column=0, row = 6, sticky = W)
+liIonTempDis = Label(window, text="5", fg ="#333", bg = "#fff")
+liIonTempDis.grid(column=1, row=7, sticky = W)
+
 # Reuse Label multiple times
 vSymbol = lambda:Label(window, text="V", fg ="#333", bg = "#fff")
 vSymbol().grid(column=3, row=0)
@@ -48,6 +60,12 @@ iSymbol().grid(column=3, row=1)
 iSymbol().grid(column=3, row=3)
 
 pSymbol = Label(window, text="W", fg ="#333", bg = "#fff").grid(column=3, row=4)
+
+CSymbol = lambda:Label(window, text="°C", fg ="#333", bg = "#fff")
+CSymbol().grid(column=3, row=5)
+CSymbol().grid(column=3, row=6)
+CSymbol().grid(column=3, row=7)
+
 
 def startSerial():
     time.sleep(2)
@@ -62,14 +80,20 @@ def updateData():
     pCurrDis.configure(text="...")
 
     ser.write(b'0')
-    vCurr = ser.readline().decode("utf-8").rstrip("\r\n")
-    iCurr = ser.readline().decode("utf-8").rstrip("\r\n")
-    pCurr = ser.readline().decode("utf-8").rstrip("\r\n")
+    vCurr 		= ser.readline().decode("utf-8").rstrip("\r\n")
+    iCurr 		= ser.readline().decode("utf-8").rstrip("\r\n")
+    pCurr 		= ser.readline().decode("utf-8").rstrip("\r\n")
+	internalTemp = ser.readline().decode("utf-8").rstrip("\r\n")
+	leadAcidTemp = ser.readline().decode("utf-8").rstrip("\r\n")
+	liIonTemp 	= ser.readline().decode("utf-8").rstrip("\r\n")
     
     vCurrDis.configure(text=str(vCurr))
     iCurrDis.configure(text=str(iCurr))
     pCurrDis.configure(text=str(pCurr))
-    
+	internalTempDis.configure(text=str(internalTemp))
+	leadAcidTempDis.configure(text=str(leadAcidTemp))
+	liIonTempDis.configure(text=str(liIonTemp))
+	
     print("HELLO")
     
     # each after call would create it own infinity 500ms delay loop (need to find another way)
