@@ -109,7 +109,7 @@ class App(Tk):
         vSymbol().grid(column=3, row=0)
         vSymbol().grid(column=3, row=2)
 
-        iSymbol = lambda:Label(labelFrame, text="I", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
+        iSymbol = lambda:Label(labelFrame, text="A", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
         iSymbol().grid(column=3, row=1)
         iSymbol().grid(column=3, row=3)
 
@@ -152,7 +152,7 @@ class App(Tk):
 
         VSymbol = Label(labelFrame2, text="V", fg ="#333", bg = "#fff",font=('Helvetica', '15')).grid(column=3, row=0)
 
-        iSymbol = lambda:Label(labelFrame2, text="I", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
+        iSymbol = lambda:Label(labelFrame2, text="A", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
         iSymbol().grid(column=3, row=1)
         iSymbol().grid(column=3, row=2)
 
