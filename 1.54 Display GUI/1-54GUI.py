@@ -29,20 +29,6 @@ class App(Tk):
         #Here to start the loop for updating data
         self.after(2, self.updateData)
 
-        #Init reuse lable
-        self.vOpenDis = None
-        self.iShortDis = None
-        self.vCurrDis = None
-        self.iCurrDis = None
-        self.pCurrDis = None
-        self.voltageBatDis = None
-        self.currentBatDis = None
-        self.currentLoadDis = None
-        self.internalTempDis = None
-        self.leadAcidTempDis = None
-        self.liIonTempDis = None
-
-
 
     #startSerial
     #delay so arduino Serial has enough time to bootup
@@ -113,12 +99,12 @@ class App(Tk):
         self.pCurrDis.grid(column=1, row=4, sticky = W)
 
         vSymbol = lambda:Label(labelFrame, text="V", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
-        self.vSymbol().grid(column=3, row=0)
-        self.vSymbol().grid(column=3, row=2)
+        vSymbol().grid(column=3, row=0)
+        vSymbol().grid(column=3, row=2)
 
         iSymbol = lambda:Label(labelFrame, text="I", fg ="#333", bg = "#fff", font=('Helvetica', '15'))
-        self.iSymbol().grid(column=3, row=1)
-        self.iSymbol().grid(column=3, row=3)
+        iSymbol().grid(column=3, row=1)
+        iSymbol().grid(column=3, row=3)
 
         pSymbol = Label(labelFrame, text="W", fg ="#333", bg = "#fff",font=('Helvetica', '15')).grid(column=3, row=4)
         # Button here
