@@ -50,6 +50,10 @@ float currentFromPanel;
 float currentToSystem;
 //hai
 
+float internalTemp;
+float leadacidTemp;
+float liIonTemp;
+
 float voltageToBatt;
 float currentToBatt;         // = CurrentToSystem - CurrentToLoad
 float currentToLoad;         //This is the current of load
@@ -196,9 +200,9 @@ void chargeBatt(){
 void tempSensingAndShutoff(){
    temperatureSensor.requestTemperatures();
    
-   float internalTemp = temperatureSensor.getTempC(temperatureSensor1);
-   float leadacidTemp = temperatureSensor.getTempC(temperatureSensor2);
-   float liIonTemp 	  = temperatureSensor.getTempC(temperatureSensor3);
+   internalTemp = temperatureSensor.getTempC(temperatureSensor1);
+   leadacidTemp = temperatureSensor.getTempC(temperatureSensor2);
+   liIonTemp = temperatureSensor.getTempC(temperatureSensor3);
    
    // overTempMain include internal temperature sensors and lead acid battery 
    // these device provide/sink large amount of current
@@ -215,7 +219,7 @@ void tempSensingAndShutoff(){
    }
   
     else{
-	    //Turn off LED if nothing is wrong
+	    //Turn off LED iftemp nothing is wrong
       digitalWrite(systemTempLEDPin, LOW);
       //Serial.print("skip broken led");
    }
@@ -268,6 +272,9 @@ void sendChargingData(){
   Serial.println(voltageFromPanel);
   Serial.println(currentFromPanel);
   Serial.println(voltageFromPanel*currentFromPanel); // power from panel
+  erial.println(internalTemp);
+  Serial.println(leadacidTemp);
+  Serial.println(liIonTemp);
 }
 
 
@@ -326,4 +333,3 @@ void loop() {
   chargeBatt();
 }
  
-
