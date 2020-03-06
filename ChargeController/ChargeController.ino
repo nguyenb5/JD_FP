@@ -141,7 +141,7 @@ void determineBattValues(){//returns the state of the circuit and how the batter
     currentToSystem   = -((currentOutTemporary*5.0/1024)-2.575)/0.166;
     currentToLoad     = -((currentLoadTemporary*5.0/1024)-2.575)/0.166;
     currentToBatt     = currentToSystem - currentToLoad;
-    voltageToBatt     = voltageToBatteryTemporary *.01543+.5;
+    voltageToBatt     = voltageToBatteryTemporary *.01543-0.5;
 
     // //benis
     // if(voltageToBatt < 14.2 || currentToBattery < 0){ //if battery voltage 
