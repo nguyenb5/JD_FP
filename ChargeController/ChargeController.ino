@@ -152,18 +152,6 @@ void determineBattValues(){//returns the state of the circuit and how the batter
     currentToLoad     = -((currentLoadTemporary*5.0/1024)-2.575)/0.166;
     currentToBatt     = currentToSystem - currentToLoad;
     voltageToBatt     = voltageToBatteryTemporary *.01543+.5;
-
-    // //benis
-    // if(voltageToBatt < 14.2 || currentToBattery < 0){ //if battery voltage 
-    //   BattState = BULK
-    // }
-  // TODO: Remove later
-  // for debug
-  //  Serial.print(currentFromPanel);
-  //  Serial.print(currentToSystem);
-  //  Serial.print(currentToLoad);
-  //  Serial.print(currentToBatt);
-  //  Serial.print(voltageToBatt);
    
 }
 
@@ -175,21 +163,21 @@ void chargeBatt(){
   //If under chanrged
   switch(BattState){
       case BULK: 
-        Serial.println("In bulk!");
+        //Serial.println("In bulk!");
         bulkChangingBangBang();
         if(voltageToBatt > CONSTANT_CHARGING_VOLTAGE){
           BattState = TRICKLE;
         }
       break;
       case TRICKLE:
-        Serial.println("In trickle!");
+        //Serial.println("In trickle!");
         if(currentToBatt <= 0.2 * CONSTANT_CHARGING_CURRENT){
           BattState = FlOATING;
         }
         
       break;  
       case FlOATING:
-        Serial.println("In floating!");
+        //Serial.println("In floating!");
         setBattVoltageBangBang(FLOATING_BATT_VOLTAGE);
   
       break;
@@ -278,12 +266,12 @@ void sendChargingData(){
   Serial.println(voltageFromPanel);
   Serial.println(currentFromPanel);
   Serial.println(voltageFromPanel*currentFromPanel); // power from panel
-  erial.println(internalTemp);
+  Serial.println(internalTemp);
   Serial.println(leadacidTemp);
   Serial.println(liIonTemp);
-  Serial.println(currentToLoad);
-  Serial.println(currentToBatt);
   Serial.println(voltageToBatt);
+  Serial.println(currentToBatt);
+  Serial.println(currentToLoad);
 }
 
 
@@ -332,7 +320,6 @@ void setBattVoltageBangBang(float target){
   }
 
 }
-
 
 
 void loop() {
