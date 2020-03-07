@@ -3,7 +3,13 @@ from tkinter import ttk
 import serial
 import time
 
-ser=serial.Serial("/dev/ttyACM0", 9600)
+
+try:
+    ser=serial.Serial("/dev/ttyACM0", 9600)
+
+
+except:
+    ser=serial.Serial("/dev/ttyUSB0", 9600)
 
 class App(Tk):
     def __init__(self):
