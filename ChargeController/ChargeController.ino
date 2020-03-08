@@ -14,11 +14,10 @@ OneWire oneWire(ONE_WIRE_BUS);
 // Pass oneWire reference to DallasTemperature library
 DallasTemperature temperatureSensor(&oneWire);
 
-// Address of temp sensor
-// Place holder address NOW!
+// Address of temp sensor - DONE
 uint8_t temperatureSensor1[8] = { 0x28, 0x6A, 0x24, 0xFC, 0x0B, 0x00, 0x00, 0x57 };	//Internal
 uint8_t temperatureSensor2[8] = { 0x28, 0x33, 0x09, 0x79, 0x97, 0x15, 0x03, 0xC1 };	//LeadAcid
-uint8_t temperatureSensor3[8] = { 0x28, 0x61, 0x64, 0x12, 0x3F, 0xFD, 0x80, 0xC6 };	//Lipo
+uint8_t temperatureSensor3[8] = { 0x28, 0x81, 0x78, 0xFD, 0x0B, 0x00, 0x00, 0xBD };	//Lipo
 
 const int solarEnPin 		  = 2;
 const int enLiIonPin 		  = 3;				// LOW = battery charging is working, HIGH = Stop charging
@@ -50,9 +49,19 @@ float currentFromPanel;
 float currentToSystem;
 //hai
 
+float internalTemp;
+float leadacidTemp;
+float liIonTemp;
+
 float voltageToBatt;
 float currentToBatt;         // = CurrentToSystem - CurrentToLoad
 float currentToLoad;         //This is the current of load
+
+int currentPanelTemporary;
+int voltageFromPanelTemporary;  
+int currentOutTemporary; 
+int voltageToBatteryTemporary;  
+int currentLoadTemporary;       
 
 byte wiper;
 
@@ -60,7 +69,9 @@ typedef enum BattStates {BULK,TRICKLE, FlOATING} BattStates;
 
 
 void setup() {
-  pinMode(solarShortPin, INPUT);		//Default OFF, there is pull down resistor
+  pinMode(solarShortPin, OUTPUT);
+  digitalWrite(solarShortPin, LOW);     //Default OFF, there is pull down resistor
+  
   pinMode(enLiIonPin, OUTPUT);
   pinMode(solarEnPin, INPUT);			//Default ON, there is pull up resistor
   pinMode(currentInPin, INPUT);
@@ -128,32 +139,22 @@ void bulkChangingBangBang(){
  * description: Read in analog values and update to global vars
  */
 void determineBattValues(){//returns the state of the circuit and how the battery should be charged. 
-   int currentPanelTemporary      = analogRead(currentInPin);   //from solar
-   int voltageFromPanelTemporary  = analogRead(voltageInPin);   //from solar
-   int currentOutTemporary        = analogRead(currentOutPin);  // Ibatt + Iload
-   int voltageToBatteryTemporary  = analogRead(voltageBattPin); // Vbatt
-   int currentLoadTemporary       = analogRead(currentLoadPin); // Iload
+   currentPanelTemporary      = analogRead(currentInPin);   //from solar
+   voltageFromPanelTemporary  = analogRead(voltageInPin);   //from solar
+   currentOutTemporary        = analogRead(currentOutPin);  // Ibatt + Iload
+   voltageToBatteryTemporary  = analogRead(voltageBattPin); // Vbatt
+   currentLoadTemporary       = analogRead(currentLoadPin); // Iload
     //Current to battery = SolarOutput - Iload
 
     //scale all of our values back
     // Update Global Vars
-    currentFromPanel  = -((currentPanelTemporary*5.0/1024)-2.575)/0.166;
-    currentToSystem   = -((currentOutTemporary*5.0/1024)-2.575)/0.166;
-    currentToLoad     = -((currentLoadTemporary*5.0/1024)-2.575)/0.166;
+	// All calibrated for 5V input
+    currentFromPanel  = -((currentPanelTemporary*5.0/1024)-2.5)/0.166;
+    voltageFromPanel  = 0.981*(voltageFromPanelTemporary * .0526577) + 0.0069-.17;
+    currentToSystem   = -0.0284*currentOutTemporary+15.15;
+    currentToLoad     = -0.029*currentLoadTemporary+15.38;
     currentToBatt     = currentToSystem - currentToLoad;
-    voltageToBatt     = voltageToBatteryTemporary *.01543-0.5;
-
-    // //benis
-    // if(voltageToBatt < 14.2 || currentToBattery < 0){ //if battery voltage 
-    //   BattState = BULK
-    // }
-  // TODO: Remove later
-  // for debug
-  //  Serial.print(currentFromPanel);
-  //  Serial.print(currentToSystem);
-  //  Serial.print(currentToLoad);
-  //  Serial.print(currentToBatt);
-  //  Serial.print(voltageToBatt);
+    voltageToBatt     = voltageToBatteryTemporary *.01541436 - 0.4;
    
 }
 
@@ -165,21 +166,21 @@ void chargeBatt(){
   //If under chanrged
   switch(BattState){
       case BULK: 
-        Serial.println("In bulk!");
+        //Serial.println("In bulk!");
         bulkChangingBangBang();
         if(voltageToBatt > CONSTANT_CHARGING_VOLTAGE){
           BattState = TRICKLE;
         }
       break;
       case TRICKLE:
-        Serial.println("In trickle!");
+        //Serial.println("In trickle!");
         if(currentToBatt <= 0.2 * CONSTANT_CHARGING_CURRENT){
           BattState = FlOATING;
         }
         
       break;  
       case FlOATING:
-        Serial.println("In floating!");
+        //Serial.println("In floating!");
         setBattVoltageBangBang(FLOATING_BATT_VOLTAGE);
   
       break;
@@ -196,9 +197,9 @@ void chargeBatt(){
 void tempSensingAndShutoff(){
    temperatureSensor.requestTemperatures();
    
-   float internalTemp = temperatureSensor.getTempC(temperatureSensor1);
-   float leadacidTemp = temperatureSensor.getTempC(temperatureSensor2);
-   float liIonTemp 	  = temperatureSensor.getTempC(temperatureSensor3);
+   internalTemp = temperatureSensor.getTempC(temperatureSensor1);
+   leadacidTemp = temperatureSensor.getTempC(temperatureSensor2);
+   liIonTemp = temperatureSensor.getTempC(temperatureSensor3);
    
    // overTempMain include internal temperature sensors and lead acid battery 
    // these device provide/sink large amount of current
@@ -215,7 +216,7 @@ void tempSensingAndShutoff(){
    }
   
     else{
-	    //Turn off LED if nothing is wrong
+	    //Turn off LED iftemp nothing is wrong
       digitalWrite(systemTempLEDPin, LOW);
       //Serial.print("skip broken led");
    }
@@ -241,14 +242,13 @@ void shortCurrentOpenVoltage(){ //sends the status of the panel and how much pow
     delay(1000);
     vOpen = analogRead(voltageInPin)*(5/1024)*((5.1+49.9)/5.1);
     //Turn on short MOSFET
-    pinMode(solarShortPin, OUTPUT);
     digitalWrite(solarShortPin, HIGH);
     delay(100);
     iShort = (-((analogRead(currentInPin)*5.0/1024)-2.55)/0.165);
    
     //Turn off short MOSFET
     //Turn voltage regulator back on
-    pinMode(solarShortPin, INPUT);
+    digitalWrite(solarShortPin, LOW);
     pinMode(solarEnPin, INPUT);
    
 }
@@ -268,6 +268,12 @@ void sendChargingData(){
   Serial.println(voltageFromPanel);
   Serial.println(currentFromPanel);
   Serial.println(voltageFromPanel*currentFromPanel); // power from panel
+  Serial.println(internalTemp);
+  Serial.println(leadacidTemp);
+  Serial.println(liIonTemp);
+  Serial.println(voltageToBatt);
+  Serial.println(currentToBatt);
+  Serial.println(currentToLoad);
 }
 
 
@@ -318,7 +324,6 @@ void setBattVoltageBangBang(float target){
 }
 
 
-
 void loop() {
   // tempSensingAndShutoff();
   determineBattValues();
@@ -326,4 +331,3 @@ void loop() {
   chargeBatt();
 }
  
-
