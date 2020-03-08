@@ -16,20 +16,20 @@ DallasTemperature temperatureSensor(&oneWire);
 
 // Address of temp sensor
 // Place holder address NOW!
-uint8_t temperatureSensor1[8] = { 0x28, 0x6A, 0x24, 0xFC, 0x0B, 0x00, 0x00, 0x57 };	//Internal
-uint8_t temperatureSensor2[8] = { 0x28, 0x33, 0x09, 0x79, 0x97, 0x15, 0x03, 0xC1 };	//LeadAcid
-uint8_t temperatureSensor3[8] = { 0x28, 0x81, 0x78, 0xFD, 0x0B, 0x00, 0x00, 0xBD };	//Lipo
+uint8_t temperatureSensor1[8] = { 0x28, 0x6A, 0x24, 0xFC, 0x0B, 0x00, 0x00, 0x57 };  //Internal
+uint8_t temperatureSensor2[8] = { 0x28, 0x33, 0x09, 0x79, 0x97, 0x15, 0x03, 0xC1 }; //LeadAcid
+uint8_t temperatureSensor3[8] = { 0x28, 0x81, 0x78, 0xFD, 0x0B, 0x00, 0x00, 0xBD }; //Lipo
 
-const int solarEnPin 		  = 2;
-const int enLiIonPin 		  = 3;				// LOW = battery charging is working, HIGH = Stop charging
-const int solarShortPin 	= 5;
+const int solarEnPin      = 2;
+const int enLiIonPin      = 3;        // LOW = battery charging is working, HIGH = Stop charging
+const int solarShortPin   = 5;
 const int systemTempLEDPin = 8;
 const int liIonTempLEDPin  = 9;
-const int currentInPin 	  = A0;
-const int voltageInPin 	  = A1;
-const int currentOutPin 	= A2;
-const int voltageBattPin 	= A3;
-const int currentLoadPin 	= A6;
+const int currentInPin    = A0;
+const int voltageInPin    = A1;
+const int currentOutPin   = A2;
+const int voltageBattPin  = A3;
+const int currentLoadPin  = A6;
 
 
 // Global vars
@@ -74,24 +74,24 @@ void setup() {
   digitalWrite(solarShortPin, LOW); //Default OFF, there is pull down resistor
   
   pinMode(enLiIonPin, OUTPUT);
-  pinMode(solarEnPin, OUTPUT);			//Default ON, there is pull up resistor
+  pinMode(solarEnPin, OUTPUT);      //Default ON, there is pull up resistor
   digitalWrite(solarEnPin, HIGH);
   pinMode(currentInPin, INPUT);
   pinMode(currentOutPin, INPUT);
   pinMode(voltageBattPin, INPUT);
   pinMode(currentLoadPin, INPUT);
-//  pinMode(dataLine, OUTPUT);		//Shouldn't need to declare for I2C
-//  pinMode(clockLine, OUTPUT);		//Shouldn't need to declare for I2C
+//  pinMode(dataLine, OUTPUT);    //Shouldn't need to declare for I2C
+//  pinMode(clockLine, OUTPUT);   //Shouldn't need to declare for I2C
   
   // turn on LiIon charger
   digitalWrite(liIonTempLEDPin, LOW);
   digitalWrite(enLiIonPin, LOW);
   
   // declare global variable
-  wiper = 128;   //init
+  wiper = 155;   //init
 
   //Initialize Communication - Only need to perform once
-  Serial.begin(9600);			
+  Serial.begin(9600);     
   Wire.begin();
   temperatureSensor.begin();
 }
@@ -112,6 +112,7 @@ void changePot(byte newWiperValue){
   Wire.write(byte(0x00));//the next byte sent doesn't matter, but the first bit determines whether to permanetly burn the resistance value onto the pot. We want a 0 here so we can change it again. 
   Wire.write(newWiperValue);//the third byte is the decimal value used to determine the resistance. This value should be between 0 and 255
   Wire.endTransmission();
+  delay(50);
 
 }
 
@@ -169,20 +170,27 @@ void chargeBatt(){
       case BULK: 
 //        Serial.println("In bulk!");
         bulkChangingBangBang();
-//        if(voltageToBatt > CONSTANT_CHARGING_VOLTAGE){
-//          BattState = TRICKLE;
-//        }
+       if(voltageToBatt > CONSTANT_CHARGING_VOLTAGE){
+         BattState = TRICKLE;
+       }
       break;
       case TRICKLE:
 //        Serial.println("In trickle!");
         if(currentToBatt <= 0.2 * CONSTANT_CHARGING_CURRENT){
           BattState = FlOATING;
         }
+        if(currentToBatt>0.5){
+          BattState = BULK;
+          wiper = 155;
+        }
         
       break;  
       case FlOATING:
 //        Serial.println("In floating!");
         setBattVoltageBangBang(FLOATING_BATT_VOLTAGE);
+        if(currentToBatt>0.5){
+          BattState = BULK;
+        }
   
       break;
   }
@@ -206,26 +214,26 @@ void tempSensingAndShutoff(){
    // these device provide/sink large amount of current
    bool overTempMain = (internalTemp > 40) || (leadacidTemp > 40);
    bool overTempLiIon = liIonTemp > 40;
-	
+  
     if(overTempMain == 1){ 
-	  //Over temp LED signal
+    //Over temp LED signal
       digitalWrite(systemTempLEDPin, HIGH);
-	  //Shut down voltage regulator
-	    pinMode(solarEnPin, OUTPUT);
+    //Shut down voltage regulator
+      pinMode(solarEnPin, OUTPUT);
       digitalWrite(solarEnPin, LOW);
       //Serial.print("over 40C");  
    }
   
     else{
-	    //Turn off LED iftemp nothing is wrong
+      //Turn off LED iftemp nothing is wrong
       digitalWrite(systemTempLEDPin, LOW);
       //Serial.print("skip broken led");
    }
    
     if(overTempLiIon = 1){
-	    //turn off charging until reset
-	    digitalWrite(enLiIonPin, HIGH);
-	    digitalWrite(liIonTempLEDPin, HIGH);
+      //turn off charging until reset
+      digitalWrite(enLiIonPin, HIGH);
+      digitalWrite(liIonTempLEDPin, HIGH);
    }   
 
 }
@@ -282,8 +290,9 @@ void sendChargingData(){
   Serial.print("state: ");
   Serial.println(BattState);
 //  Serial.print("System current:  ");
-//  Serial.println(currentToSystem);
-//  Serial.println(currentToLoad);
+//  Serial.println(currentToSystem;
+  Serial.print("Load current:  ");
+  Serial.println(currentToLoad);
 
 //  Serial.print("Curren val:  ");
 //  Serial.println(currentOutTemporary);
@@ -303,11 +312,11 @@ void sendSystemInfo(){ //send the voltage and current the battery sees.
     requestCode = (Serial.read() - '0');
     delay(50);
 
-    if(requestCode == 0){		//Code 0 mean regular charge data Vcurr, Icurr, Pcurr
+    if(requestCode == 0){   //Code 0 mean regular charge data Vcurr, Icurr, Pcurr
       sendChargingData();
     }
 
-    else if(requestCode == 1){	//Code 1 mean perfrom Open-Short test for solar panel
+    else if(requestCode == 1){  //Code 1 mean perfrom Open-Short test for solar panel
       shortCurrentOpenVoltage();
       sendShortOpen();
     }
