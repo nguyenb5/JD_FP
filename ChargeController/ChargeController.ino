@@ -18,7 +18,7 @@ DallasTemperature temperatureSensor(&oneWire);
 // Place holder address NOW!
 uint8_t temperatureSensor1[8] = { 0x28, 0x6A, 0x24, 0xFC, 0x0B, 0x00, 0x00, 0x57 };	//Internal
 uint8_t temperatureSensor2[8] = { 0x28, 0x33, 0x09, 0x79, 0x97, 0x15, 0x03, 0xC1 };	//LeadAcid
-uint8_t temperatureSensor3[8] = { 0x28, 0x61, 0x64, 0x12, 0x3F, 0xFD, 0x80, 0xC6 };	//Lipo
+uint8_t temperatureSensor3[8] = { 0x28, 0x81, 0x78, 0xFD, 0x0B, 0x00, 0x00, 0xBD };	//Lipo
 
 const int solarEnPin 		  = 2;
 const int enLiIonPin 		  = 3;				// LOW = battery charging is working, HIGH = Stop charging
@@ -147,11 +147,12 @@ void determineBattValues(){//returns the state of the circuit and how the batter
 
     //scale all of our values back
     // Update Global Vars
-    currentFromPanel  = -((currentPanelTemporary*5.0/1024)-2.575)/0.166;
-    currentToSystem   = -((currentOutTemporary*5.0/1024)-2.575)/0.166;
-    currentToLoad     = -((currentLoadTemporary*5.0/1024)-2.575)/0.166;
+    currentFromPanel  = -((currentPanelTemporary*5.0/1024)-2.5)/0.166;
+    voltageFromPanel  = 0.981*(voltageFromPanelTemporary * .0526577) + 0.0069;
+    currentToSystem   = -((currentOutTemporary*5.0/1024)-2.5)/0.166;
+    currentToLoad     = -((currentLoadTemporary*5.0/1024)-2.5)/0.166;
     currentToBatt     = currentToSystem - currentToLoad;
-    voltageToBatt     = voltageToBatteryTemporary *.01543+.5;
+    voltageToBatt     = voltageToBatteryTemporary *.01541436 - 0.3;
    
 }
 
