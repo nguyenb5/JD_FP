@@ -123,12 +123,12 @@ void changePot(byte newWiperValue){
  */
 void bulkChangingBangBang(){
   //do I need to shut off the power to the battery to take an accurate reading of its resting voltage. 
-  if(currentToBatt > 1){
+  if(currentToBatt > 1.2){
     wiper+= 1;              //CHECK if this decrease charging voltage;
     changePot(wiper);
   }
 
-  else if (currentToBatt < 1){
+  else if (currentToBatt < 0.8){
     wiper -= 1;
     changePot(wiper);
   }
@@ -150,7 +150,7 @@ void determineBattValues(){//returns the state of the circuit and how the batter
 
     //scale all of our values back
     // Update Global Vars
-    currentFromPanel  = -((currentPanelTemporary*5.0/1024)-2.5)/0.166;
+    currentFromPanel  = -0.0277*currentPanelTemporary+15.052;
     voltageFromPanel  = 0.981*(voltageFromPanelTemporary * .0526577) + 0.0069-.17;
     currentToSystem   = -0.0284*currentOutTemporary+15.15;
     currentToLoad     = -0.029*currentLoadTemporary+15.38;
@@ -209,7 +209,6 @@ void tempSensingAndShutoff(){
    internalTemp = temperatureSensor.getTempC(temperatureSensor1);
    leadacidTemp = temperatureSensor.getTempC(temperatureSensor2);
    liIonTemp = temperatureSensor.getTempC(temperatureSensor3);
-   
    // overTempMain include internal temperature sensors and lead acid battery 
    // these device provide/sink large amount of current
    bool overTempMain = (internalTemp > 40) || (leadacidTemp > 40);
@@ -219,9 +218,8 @@ void tempSensingAndShutoff(){
     //Over temp LED signal
       digitalWrite(systemTempLEDPin, HIGH);
     //Shut down voltage regulator
-      pinMode(solarEnPin, OUTPUT);
       digitalWrite(solarEnPin, LOW);
-      //Serial.print("over 40C");  
+      Serial.print("over 40C");  
    }
   
     else{
@@ -230,7 +228,8 @@ void tempSensingAndShutoff(){
       //Serial.print("skip broken led");
    }
    
-    if(overTempLiIon = 1){
+    if(overTempLiIon == 1){
+      Serial.println(liIonTemp);
       //turn off charging until reset
       digitalWrite(enLiIonPin, HIGH);
       digitalWrite(liIonTempLEDPin, HIGH);
@@ -244,22 +243,24 @@ void tempSensingAndShutoff(){
  * Turn of regulator to measure Vopen, then short circuit to measure Ishort
  * CHECK: Do the system need to recover?
  */
-void shortCurrentOpenVoltage(){ //sends the status of the panel and how much power it is producing
+void shortCurrentOpenVoltage(){ //sends the status of the panel and how much power it is producing 
    //Perform shutdown voltage regulator
-    pinMode(solarEnPin, OUTPUT);
     digitalWrite(solarEnPin, LOW);
     delay(1000);
-    vOpen = analogRead(voltageInPin)*(5/1024)*((5.1+49.9)/5.1);
+    
+    vOpen = 0.981*(analogRead(voltageInPin) * .0526577) + 0.0069-.17;
     //Turn on short MOSFET
-    pinMode(solarShortPin, OUTPUT);
-    digitalWrite(solarShortPin, LOW);
+
     delay(100);
-    iShort = (-((analogRead(currentInPin)*5.0/1024)-2.55)/0.165);
-   
+    digitalWrite(solarShortPin, HIGH);
+    delay(100);
+    iShort = -0.0277*analogRead(currentInPin)+15.052;
+       delay(100);
+
     //Turn off short MOSFET
     //Turn voltage regulator back on
-    pinMode(solarShortPin, INPUT);
-    pinMode(solarEnPin, INPUT);
+    digitalWrite(solarShortPin, LOW);
+    digitalWrite(solarEnPin, HIGH);
    
 }
 
@@ -285,14 +286,14 @@ void sendChargingData(){
 //  Serial.println(liIonTemp);
   Serial.print("Batt voltage:  ");
   Serial.println(voltageToBatt);
-  Serial.print("Current to batt:   ");
+  Serial.print("Current   ");
   Serial.println(currentToBatt);
   Serial.print("state: ");
   Serial.println(BattState);
 //  Serial.print("System current:  ");
-//  Serial.println(currentToSystem;
-  Serial.print("Load current:  ");
-  Serial.println(currentToLoad);
+//  Serial.println(currentFromPanel);
+//  Serial.print("Load current:  ");
+//  Serial.println(currentToLoad);
 
 //  Serial.print("Curren val:  ");
 //  Serial.println(currentOutTemporary);
@@ -349,7 +350,7 @@ void setBattVoltageBangBang(float target){
 
 void loop() {
   
-  // tempSensingAndShutoff();
+//   tempSensingAndShutoff();
   determineBattValues();
   sendSystemInfo();
   chargeBatt();
