@@ -92,7 +92,7 @@ void setup() {
 
   //Initialize Communication - Only need to perform once
   Serial.begin(9600);     
-  Wire.begin();
+  Wire.begin(); 
   temperatureSensor.begin();
 }
 
@@ -206,7 +206,7 @@ void chargeBatt(){
 void tempSensingAndShutoff(){
    temperatureSensor.requestTemperatures();
    
-   internalTemp = temperatureSensor.getTempC(temperatureSensor1);
+   internalTemp = temperatureSensor.getTempC(temperatureSensor1)-1;
    leadacidTemp = temperatureSensor.getTempC(temperatureSensor2);
    liIonTemp = temperatureSensor.getTempC(temperatureSensor3);
    // overTempMain include internal temperature sensors and lead acid battery 
@@ -219,7 +219,8 @@ void tempSensingAndShutoff(){
       digitalWrite(systemTempLEDPin, HIGH);
     //Shut down voltage regulator
       digitalWrite(solarEnPin, LOW);
-      Serial.print("over 40C");  
+      digitalWrite(enLiIonPin, HIGH);
+      Serial.print("Over Temp: 113F");  
    }
   
     else{
@@ -229,7 +230,7 @@ void tempSensingAndShutoff(){
    }
    
     if(overTempLiIon == 1){
-      Serial.println(liIonTemp);
+      Serial.println("Over Temp");
       //turn off charging until reset
       digitalWrite(enLiIonPin, HIGH);
       digitalWrite(liIonTempLEDPin, HIGH);
@@ -300,22 +301,23 @@ void sendChargingData(){
 //  Serial.print("Wiper: ");
 //  Serial.println(wiper);
 //
-//  Serial.print(internalTemp);
-//    Serial.print(" " );
-//    Serial.print(leadacidTemp);
-//    Serial.print(" " );
-//    Serial.println(liIonTemp);
-
-
-  Serial.println(voltageFromPanel);
-  Serial.println(currentFromPanel);
-  Serial.println(voltageFromPanel*currentFromPanel); // power from panel
+Serial.print("Internal Temp: ");
   Serial.println(internalTemp);
-  Serial.println(leadacidTemp);
-  Serial.println(liIonTemp);
-  Serial.println(voltageToBatt);
-  Serial.println(currentToBatt);
-  Serial.println(currentToLoad);
+    Serial.print("Lead Acid Temp: ");
+    Serial.println(leadacidTemp);
+    Serial.print("Li-Ion Temp: ");
+    Serial.println(liIonTemp);
+
+
+//  Serial.println(voltageFromPanel);
+//  Serial.println(currentFromPanel);
+//  Serial.println(voltageFromPanel*currentFromPanel); // power from panel
+//  Serial.println(internalTemp);
+//  Serial.println(leadacidTemp);
+//  Serial.println(liIonTemp);
+//  Serial.println(voltageToBatt);
+//  Serial.println(currentToBatt);
+//  Serial.println(currentToLoad);
 
 
 
