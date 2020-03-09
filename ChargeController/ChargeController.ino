@@ -18,7 +18,7 @@ DallasTemperature temperatureSensor(&oneWire);
 // Place holder address NOW!
 uint8_t temperatureSensor1[8] = { 0x28, 0x6A, 0x24, 0xFC, 0x0B, 0x00, 0x00, 0x57 };  //Internal
 uint8_t temperatureSensor2[8] = { 0x28, 0x33, 0x09, 0x79, 0x97, 0x15, 0x03, 0xC1 }; //LeadAcid
-uint8_t temperatureSensor3[8] = { 0x28, 0x81, 0x78, 0xFD, 0x0B, 0x00, 0x00, 0xBD }; //Lipo
+uint8_t temperatureSensor3[8] = {0x28, 0x00, 0x6B, 0xFD, 0x0B, 0x00, 0x00, 0x52 }; //Lipo
 
 const int solarEnPin      = 2;
 const int enLiIonPin      = 3;        // LOW = battery charging is working, HIGH = Stop charging
@@ -123,12 +123,12 @@ void changePot(byte newWiperValue){
  */
 void bulkChangingBangBang(){
   //do I need to shut off the power to the battery to take an accurate reading of its resting voltage. 
-  if(currentToBatt > 1.2){
+  if(currentToBatt > 2.2){
     wiper+= 1;              //CHECK if this decrease charging voltage;
     changePot(wiper);
   }
 
-  else if (currentToBatt < 0.8){
+  else if (currentToBatt < 1.8){
     wiper -= 1;
     changePot(wiper);
   }
@@ -297,6 +297,16 @@ void sendChargingData(){
 
 //  Serial.print("Curren val:  ");
 //  Serial.println(currentOutTemporary);
+  Serial.print("Wiper: ");
+  Serial.println(wiper);
+
+  Serial.print(internalTemp);
+    Serial.print(" " );
+    Serial.print(leadacidTemp);
+    Serial.print(" " );
+    Serial.println(liIonTemp);
+
+
 
 }
 
@@ -350,7 +360,7 @@ void setBattVoltageBangBang(float target){
 
 void loop() {
   
-//   tempSensingAndShutoff();
+   tempSensingAndShutoff();
   determineBattValues();
   sendSystemInfo();
   chargeBatt();
