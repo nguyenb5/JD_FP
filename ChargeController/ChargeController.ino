@@ -284,12 +284,12 @@ void sendChargingData(){
 //  Serial.println(internalTemp);
 //  Serial.println(leadacidTemp);
 //  Serial.println(liIonTemp);
-  Serial.print("Batt voltage:  ");
-  Serial.println(voltageToBatt);
-  Serial.print("Current   ");
-  Serial.println(currentToBatt);
-  Serial.print("state: ");
-  Serial.println(BattState);
+//  Serial.print("Batt voltage:  ");
+//  Serial.println(voltageToBatt);
+//  Serial.print("Current   ");
+//  Serial.println(currentToBatt);
+//  Serial.print("state: ");
+//  Serial.println(BattState);
 //  Serial.print("System current:  ");
 //  Serial.println(currentFromPanel);
 //  Serial.print("Load current:  ");
@@ -297,14 +297,25 @@ void sendChargingData(){
 
 //  Serial.print("Curren val:  ");
 //  Serial.println(currentOutTemporary);
-  Serial.print("Wiper: ");
-  Serial.println(wiper);
+//  Serial.print("Wiper: ");
+//  Serial.println(wiper);
+//
+//  Serial.print(internalTemp);
+//    Serial.print(" " );
+//    Serial.print(leadacidTemp);
+//    Serial.print(" " );
+//    Serial.println(liIonTemp);
 
-  Serial.print(internalTemp);
-    Serial.print(" " );
-    Serial.print(leadacidTemp);
-    Serial.print(" " );
-    Serial.println(liIonTemp);
+
+  Serial.println(voltageFromPanel);
+  Serial.println(currentFromPanel);
+  Serial.println(voltageFromPanel*currentFromPanel); // power from panel
+  Serial.println(internalTemp);
+  Serial.println(leadacidTemp);
+  Serial.println(liIonTemp);
+  Serial.println(voltageToBatt);
+  Serial.println(currentToBatt);
+  Serial.println(currentToLoad);
 
 
 
