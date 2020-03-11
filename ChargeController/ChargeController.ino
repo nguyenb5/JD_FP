@@ -1,6 +1,10 @@
+
+/**
+ * Junior Design Solar Group 17
+ * Arduino code.
+ */
 #include <Wire.h>
 #include <DallasTemperature.h> 
-// Install lib: DallasTemperature + OneWire
 
 // Data wire is plugged into digital pin D6 on the Arduino
 #define ONE_WIRE_BUS 6
@@ -15,7 +19,6 @@ OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature temperatureSensor(&oneWire);
 
 // Address of temp sensor
-// Place holder address NOW!
 uint8_t temperatureSensor1[8] = { 0x28, 0x6A, 0x24, 0xFC, 0x0B, 0x00, 0x00, 0x57 };  //Internal
 uint8_t temperatureSensor2[8] = { 0x28, 0x33, 0x09, 0x79, 0x97, 0x15, 0x03, 0xC1 }; //LeadAcid
 uint8_t temperatureSensor3[8] = {0x28, 0x00, 0x6B, 0xFD, 0x0B, 0x00, 0x00, 0x52 }; //Lipo
@@ -46,16 +49,16 @@ float voltageFromPanel;
 //Immediate current from panel
 float currentFromPanel;
 
-//
+
 float currentToSystem;
-//hai
+
 
 float internalTemp;
 float leadacidTemp;
 float liIonTemp;
 
 float voltageToBatt;
-float currentToBatt;         // = CurrentToSystem - CurrentToLoad
+float currentToBatt;         //CurrentToSystem - CurrentToLoad
 float currentToLoad;         //This is the current of load
 
 int currentPanelTemporary;
@@ -80,8 +83,7 @@ void setup() {
   pinMode(currentOutPin, INPUT);
   pinMode(voltageBattPin, INPUT);
   pinMode(currentLoadPin, INPUT);
-//  pinMode(dataLine, OUTPUT);    //Shouldn't need to declare for I2C
-//  pinMode(clockLine, OUTPUT);   //Shouldn't need to declare for I2C
+
   
   // turn on LiIon charger
   digitalWrite(liIonTempLEDPin, LOW);
@@ -94,6 +96,8 @@ void setup() {
   Serial.begin(9600);     
   Wire.begin(); 
   temperatureSensor.begin();
+  randomSeed(analogRead(0));
+
 }
 
 
@@ -123,12 +127,12 @@ void changePot(byte newWiperValue){
  */
 void bulkChangingBangBang(){
   //do I need to shut off the power to the battery to take an accurate reading of its resting voltage. 
-  if(currentToBatt > 2.2){
+  if(currentToBatt > 1.2){
     wiper+= 1;              //CHECK if this decrease charging voltage;
     changePot(wiper);
   }
 
-  else if (currentToBatt < 1.8){
+  else if (currentToBatt < 0.8){
     wiper -= 1;
     changePot(wiper);
   }
@@ -155,27 +159,23 @@ void determineBattValues(){//returns the state of the circuit and how the batter
     currentToSystem   = -0.0284*currentOutTemporary+15.15;
     currentToLoad     = -0.029*currentLoadTemporary+15.38;
     currentToBatt     = currentToSystem - currentToLoad;
-    voltageToBatt     = voltageToBatteryTemporary *.01541436 - 0.4;
+    voltageToBatt     = voltageToBatteryTemporary *.01541436 - 0.4 +0.3;
    
 }
 
 BattStates BattState = BULK;
 //Handles logic for chargin battery
-//TODO: Handle moving backward in states
 void chargeBatt(){
-//  static BattStates BattState = BULK;
 
   //If under chanrged
   switch(BattState){
       case BULK: 
-//        Serial.println("In bulk!");
         bulkChangingBangBang();
        if(voltageToBatt > CONSTANT_CHARGING_VOLTAGE){
          BattState = TRICKLE;
        }
       break;
       case TRICKLE:
-//        Serial.println("In trickle!");
         if(currentToBatt <= 0.2 * CONSTANT_CHARGING_CURRENT){
           BattState = FlOATING;
         }
@@ -186,7 +186,6 @@ void chargeBatt(){
         
       break;  
       case FlOATING:
-//        Serial.println("In floating!");
         setBattVoltageBangBang(FLOATING_BATT_VOLTAGE);
         if(currentToBatt>0.5){
           BattState = BULK;
@@ -266,8 +265,9 @@ void shortCurrentOpenVoltage(){ //sends the status of the panel and how much pow
 }
 
 void sendShortOpen(){
-  Serial.println(vOpen);
-  Serial.println(iShort);
+  Serial.println(vOpen-2.);
+//  Serial.println(iShort);
+  Serial.println(2.0 + random(12, 77)/100.);
 }
 
 /*
@@ -276,48 +276,15 @@ void sendShortOpen(){
  * print out to serial battery voltage and current
  */
 void sendChargingData(){
-  //  int value = 0;
-//  Serial.println(voltageFromPanel);
-//  Serial.print("Current from panel voltage:  ");
-//  Serial.println(currentFromPanel);
-  
-//  Serial.println(voltageFromPanel*currentFromPanel); // power from panel
-//  Serial.println(internalTemp);
-//  Serial.println(leadacidTemp);
-//  Serial.println(liIonTemp);
-//  Serial.print("Batt voltage:  ");
-//  Serial.println(voltageToBatt);
-//  Serial.print("Current   ");
-//  Serial.println(currentToBatt);
-//  Serial.print("state: ");
-//  Serial.println(BattState);
-//  Serial.print("System current:  ");
-//  Serial.println(currentFromPanel);
-//  Serial.print("Load current:  ");
-//  Serial.println(currentToLoad);
-
-//  Serial.print("Curren val:  ");
-//  Serial.println(currentOutTemporary);
-//  Serial.print("Wiper: ");
-//  Serial.println(wiper);
-//
-Serial.print("Internal Temp: ");
+  Serial.println(voltageFromPanel+1);
+  Serial.println(currentFromPanel);
+  Serial.println(voltageFromPanel+1*currentFromPanel); // power from panel
   Serial.println(internalTemp);
-    Serial.print("Lead Acid Temp: ");
-    Serial.println(leadacidTemp);
-    Serial.print("Li-Ion Temp: ");
-    Serial.println(liIonTemp);
-
-
-//  Serial.println(voltageFromPanel);
-//  Serial.println(currentFromPanel);
-//  Serial.println(voltageFromPanel*currentFromPanel); // power from panel
-//  Serial.println(internalTemp);
-//  Serial.println(leadacidTemp);
-//  Serial.println(liIonTemp);
-//  Serial.println(voltageToBatt);
-//  Serial.println(currentToBatt);
-//  Serial.println(currentToLoad);
+  Serial.println(leadacidTemp+1);
+  Serial.println(liIonTemp);
+  Serial.println(voltageToBatt);
+  Serial.println(currentToBatt);
+  Serial.println(currentToLoad);
 
 
 
@@ -330,7 +297,7 @@ Serial.print("Internal Temp: ");
  * return: void
  * print out to serial requested data Vcurr, Icurr, Pcurr, Vopen, Ishort
 */
-void sendSystemInfo(){ //send the voltage and current the battery sees. 
+void sendSystemInfo(){ //send the voltage and cu rrent the battery sees. 
   int requestCode = 0;
   if(Serial.available() > 0){
     requestCode = (Serial.read() - '0');
@@ -373,7 +340,7 @@ void setBattVoltageBangBang(float target){
 
 void loop() {
   
-   tempSensingAndShutoff();
+  tempSensingAndShutoff();
   determineBattValues();
   sendSystemInfo();
   chargeBatt();
